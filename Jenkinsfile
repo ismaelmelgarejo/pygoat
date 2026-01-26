@@ -171,9 +171,9 @@ pipeline {
 
   post {
     always {
-      script {
-        // Publicar SIEMPRE a DefectDojo aunque falle por gates
-      }
+      // script {
+      //   // Publicar SIEMPRE a DefectDojo aunque falle por gates
+      // }
       withCredentials([string(credentialsId: 'defectdojo_api_token', variable: 'DOJO_TOKEN')]) {
         sh """
           set -euo pipefail
