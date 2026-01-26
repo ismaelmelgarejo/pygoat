@@ -115,8 +115,8 @@ pipeline {
           done
 
           # 4) Lookup del proyecto y exportar findings FPF
-          ENCODED_NAME="$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$PRODUCT_NAME'''))")"
-          ENCODED_VER="$(python3 -c "import urllib.parse; print(urllib.parse.quote('''$BUILD_NUMBER'''))")"
+          ENCODED_NAME="$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$PRODUCT_NAME")"
+          ENCODED_VER="$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$BUILD_NUMBER")"
 
           PROJ="$(curl -sS -H "X-Api-Key: $DTRACK_API_KEY" \
             "$DTRACK_BACKEND_URL/api/v1/project/lookup?name=$ENCODED_NAME&version=$ENCODED_VER")"
