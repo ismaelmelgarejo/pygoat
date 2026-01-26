@@ -170,57 +170,60 @@ pipeline {
   }
 
   post {
-  always {
-    withCredentials([string(credentialsId: 'defectdojo_api_token', variable: 'DOJO_TOKEN')]) {
-      sh """
-        set -euo pipefail
+    always {
+      script {
+        // Publicar SIEMPRE a DefectDojo aunque falle por gates
+      }
+      withCredentials([string(credentialsId: 'defectdojo_api_token', variable: 'DOJO_TOKEN')]) {
+        sh """
+          set -euo pipefail
 
-        # Bandit -> DefectDojo
-        if [ -f "${REPORTS_DIR}/bandit.json" ]; then
-          curl -sS -X POST "${DOJO_URL}/api/v2/import-scan/" \
-            -H "Authorization: Token ${DOJO_TOKEN}" \
-            -F "scan_type=Bandit Scan" \
-            -F "file=@${REPORTS_DIR}/bandit.json" \
-            -F "product_type_name=${PRODUCT_TYPE_NAME}" \
-            -F "product_name=${PRODUCT_NAME}" \
-            -F "engagement_name=${ENGAGEMENT_NAME}" \
-            -F "auto_create_context=true" \
-            -F "close_old_findings=true" \
-            -F "scan_date=\$(date +%F)" > /dev/null
-        fi
+          # Bandit -> DefectDojo
+          if [ -f "${REPORTS_DIR}/bandit.json" ]; then
+            curl -sS -X POST "${DOJO_URL}/api/v2/import-scan/" \
+              -H "Authorization: Token ${DOJO_TOKEN}" \
+              -F "scan_type=Bandit Scan" \
+              -F "file=@${REPORTS_DIR}/bandit.json" \
+              -F "product_type_name=${PRODUCT_TYPE_NAME}" \
+              -F "product_name=${PRODUCT_NAME}" \
+              -F "engagement_name=${ENGAGEMENT_NAME}" \
+              -F "auto_create_context=true" \
+              -F "close_old_findings=true" \
+              -F "scan_date=\$(date +%F)" > /dev/null
+          fi
 
-        # Gitleaks -> DefectDojo
-        if [ -f "${REPORTS_DIR}/gitleaks.json" ]; then
-          curl -sS -X POST "${DOJO_URL}/api/v2/import-scan/" \
-            -H "Authorization: Token ${DOJO_TOKEN}" \
-            -F "scan_type=Gitleaks Scan" \
-            -F "file=@${REPORTS_DIR}/gitleaks.json" \
-            -F "product_type_name=${PRODUCT_TYPE_NAME}" \
-            -F "product_name=${PRODUCT_NAME}" \
-            -F "engagement_name=${ENGAGEMENT_NAME}" \
-            -F "auto_create_context=true" \
-            -F "close_old_findings=true" \
-            -F "scan_date=\$(date +%F)" > /dev/null
-        fi
+          # Gitleaks -> DefectDojo
+          if [ -f "${REPORTS_DIR}/gitleaks.json" ]; then
+            curl -sS -X POST "${DOJO_URL}/api/v2/import-scan/" \
+              -H "Authorization: Token ${DOJO_TOKEN}" \
+              -F "scan_type=Gitleaks Scan" \
+              -F "file=@${REPORTS_DIR}/gitleaks.json" \
+              -F "product_type_name=${PRODUCT_TYPE_NAME}" \
+              -F "product_name=${PRODUCT_NAME}" \
+              -F "engagement_name=${ENGAGEMENT_NAME}" \
+              -F "auto_create_context=true" \
+              -F "close_old_findings=true" \
+              -F "scan_date=\$(date +%F)" > /dev/null
+          fi
 
-        # Dependency-Track FPF -> DefectDojo
-        if [ -f "${REPORTS_DIR}/dtrack-fpf.json" ]; then
-          curl -sS -X POST "${DOJO_URL}/api/v2/import-scan/" \
-            -H "Authorization: Token ${DOJO_TOKEN}" \
-            -F "scan_type=Dependency Track Finding Packaging Format (FPF) Export" \
-            -F "file=@${REPORTS_DIR}/dtrack-fpf.json" \
-            -F "product_type_name=${PRODUCT_TYPE_NAME}" \
-            -F "product_name=${PRODUCT_NAME}" \
-            -F "engagement_name=${ENGAGEMENT_NAME}" \
-            -F "auto_create_context=true" \
-            -F "close_old_findings=true" \
-            -F "scan_date=\$(date +%F)" > /dev/null
-        fi
-      """
+          # Dependency-Track FPF -> DefectDojo
+          if [ -f "${REPORTS_DIR}/dtrack-fpf.json" ]; then
+            curl -sS -X POST "${DOJO_URL}/api/v2/import-scan/" \
+              -H "Authorization: Token ${DOJO_TOKEN}" \
+              -F "scan_type=Dependency Track Finding Packaging Format (FPF) Export" \
+              -F "file=@${REPORTS_DIR}/dtrack-fpf.json" \
+              -F "product_type_name=${PRODUCT_TYPE_NAME}" \
+              -F "product_name=${PRODUCT_NAME}" \
+              -F "engagement_name=${ENGAGEMENT_NAME}" \
+              -F "auto_create_context=true" \
+              -F "close_old_findings=true" \
+              -F "scan_date=\$(date +%F)" > /dev/null
+          fi
+        """
+      }
+
+      sh """ls -lah ${REPORTS_DIR} || true"""
+      archiveArtifacts artifacts: "${REPORTS_DIR}/*", fingerprint: true
     }
-
-    sh """ls -lah ${REPORTS_DIR} || true"""
-    archiveArtifacts artifacts: "${REPORTS_DIR}/*", fingerprint: true
   }
-}
 }
