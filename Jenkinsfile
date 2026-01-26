@@ -6,8 +6,10 @@ pipeline {
   }
 
   environment {
-    DOJO_URL            = "http://host.docker.internal:8080"
-    DTRACK_BACKEND_URL  = "http://host.docker.internal:8084"
+    //DOJO_URL            = "http://host.docker.internal:8080"
+    //DTRACK_BACKEND_URL  = "http://host.docker.internal:8084"
+    DOJO_URL            = "http://localhost:8080"
+    DTRACK_BACKEND_URL  = "http://localhost:8084"
 
     PRODUCT_TYPE_NAME   = "Training"
     PRODUCT_NAME        = "PyGoat"
