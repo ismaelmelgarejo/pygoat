@@ -27,61 +27,77 @@ pipeline {
     }
 
     stage('Prep') {
-      steps {
-        sh '''#!/usr/bin/env bash
-          set -e
-          mkdir -p "$REPORTS_DIR"
-        '''
-      }
-    }
+  steps {
+    sh '''#!/usr/bin/env bash
+      set -e
+      mkdir -p "$REPORTS_DIR"
+      echo '{}' > "$REPORTS_DIR/summary.json"
+      jq . "$REPORTS_DIR/summary.json" >/dev/null
+    '''
+  }
+}
 
     stage('Secrets Scan - gitleaks') {
-      steps {
-        sh '''#!/usr/bin/env bash
-          set -euo pipefail
+  steps {
+    sh '''#!/usr/bin/env bash
+      set -euo pipefail
 
-          mkdir -p "$REPORTS_DIR"
+      mkdir -p "$REPORTS_DIR"
 
-          docker run --rm \
-            --volumes-from jenkins \
-            -w "$WORKSPACE" \
-            "$GITLEAKS_IMAGE" detect \
-              --source . \
-              --report-format json \
-              --report-path "$REPORTS_DIR/gitleaks.json" \
-              --exit-code 0
+      docker run --rm \
+        --volumes-from jenkins \
+        -w "$WORKSPACE" \
+        "$GITLEAKS_IMAGE" detect \
+          --source . \
+          --report-format json \
+          --report-path "$REPORTS_DIR/gitleaks.json" \
+          --exit-code 0
 
-          LEAKS="$(jq 'length' "$REPORTS_DIR/gitleaks.json")"
-          echo "Gitleaks findings: $LEAKS"
-          echo "{ \"gitleaks\": { \"findings\": $LEAKS } }" > "$REPORTS_DIR/summary.json"
-        '''
-      }
-    }
+      LEAKS="$(jq 'length' "$REPORTS_DIR/gitleaks.json")"
+      echo "Gitleaks findings: $LEAKS"
+
+      tmp="$(mktemp)"
+      jq --argjson leaks "$LEAKS" \
+        '. + {gitleaks:{findings:$leaks}}' \
+        "$REPORTS_DIR/summary.json" > "$tmp"
+      mv "$tmp" "$REPORTS_DIR/summary.json"
+
+      jq . "$REPORTS_DIR/summary.json" >/dev/null
+    '''
+  }
+}
 
     stage('SAST - Bandit') {
-      steps {
-        sh '''#!/usr/bin/env bash
-          set -euo pipefail
+  steps {
+    sh '''#!/usr/bin/env bash
+      set -euo pipefail
 
-          docker run --rm \
-            --volumes-from jenkins \
-            -w "$WORKSPACE" \
-            python:3.12-slim bash -lc '
-              pip -q install bandit &&
-              mkdir -p "'"$REPORTS_DIR"'" &&
-              bandit -r . -f json -o "'"$REPORTS_DIR"'/bandit.json" || true
-            '
+      docker run --rm \
+        --volumes-from jenkins \
+        -w "$WORKSPACE" \
+        python:3.12-slim bash -lc '
+          pip -q install bandit &&
+          mkdir -p "'"$REPORTS_DIR"'" &&
+          bandit -r . -f json -o "'"$REPORTS_DIR"'/bandit.json" || true
+        '
 
-          BANDIT_HIGH="$(jq '[.results[] | select(.issue_severity=="HIGH")] | length' "$REPORTS_DIR/bandit.json")"
-          echo "Bandit HIGH: $BANDIT_HIGH"
+      BANDIT_HIGH="$(jq '[.results[] | select(.issue_severity=="HIGH")] | length' "$REPORTS_DIR/bandit.json")"
+      echo "Bandit HIGH: $BANDIT_HIGH"
 
-          jq --argjson bh "$BANDIT_HIGH" \
-            '. + {bandit:{high:$bh}}' \
-            "$REPORTS_DIR/summary.json" > "$REPORTS_DIR/summary.tmp.json"
-          mv "$REPORTS_DIR/summary.tmp.json" "$REPORTS_DIR/summary.json"
-        '''
-      }
-    }
+      # Debug opcional (si vuelve a fallar, esto muestra el contenido)
+      # echo "DEBUG summary.json:"; cat "$REPORTS_DIR/summary.json" || true
+
+      tmp="$(mktemp)"
+      jq --argjson bh "$BANDIT_HIGH" \
+        '. + {bandit:{high:$bh}}' \
+        "$REPORTS_DIR/summary.json" > "$tmp"
+      mv "$tmp" "$REPORTS_DIR/summary.json"
+
+      jq . "$REPORTS_DIR/summary.json" >/dev/null
+    '''
+  }
+}
+
 
     stage('SCA - SBOM -> Dependency-Track -> FPF Export') {
       environment {
