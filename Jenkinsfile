@@ -193,7 +193,7 @@ pipeline {
 
   post {
     always {
-      withCredentials([string(credentialsId: 'defectdojo_api_token', variable: 'DOJO_TOKEN')]) {
+      withCredentials([string(credentialsId: 'defectdojo_api_token2', variable: 'DOJO_TOKEN')]) {
         sh(label: 'Upload results to DefectDojo', script: '''#!/usr/bin/env bash
           set -euo pipefail
 
