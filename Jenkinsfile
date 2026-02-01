@@ -5,8 +5,16 @@ pipeline {
       args '-u root'
     }
   }
-
-  options { timestamps() }
+  options {
+    timestamps()
+    skipDefaultCheckout(true)
+  }
+  stages {
+    stage('Init Workspace') {
+      steps {
+        deleteDir()
+      }
+    }
 
   environment {
     // ====== URLs (TU SETUP) ======
@@ -51,8 +59,8 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
-          rm -rf pygoat
-          git clone https://github.com/ismaelmelgarejo/pygoat.git
+          rm -rf src
+          git clone https://github.com/ismaelmelgarejo/pygoat.git src
         '''
       }
     }
@@ -61,7 +69,7 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
-          cd pygoat
+          cd src
           pip install --upgrade pip >/dev/null
           pip install bandit >/dev/null
 
@@ -75,7 +83,7 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
-          cd pygoat
+          cd src
           pip install cyclonedx-bom >/dev/null
 
           REQ="$(find . -maxdepth 3 -name "requirements*.txt" -print -quit || true)"
@@ -114,7 +122,7 @@ pipeline {
       steps {
         sh '''
           set -euo pipefail
-          cd pygoat
+          cd src
 
           if ! command -v gitleaks >/dev/null 2>&1; then
             wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz
@@ -134,7 +142,7 @@ pipeline {
         withCredentials([string(credentialsId: 'DTRACK_API_KEY', variable: 'DTRACK_KEY')]) {
           sh '''
             set -euo pipefail
-            cd pygoat
+            cd src
 
             # Elegir SBOM final (json o xml)
             if [ -s sbom.json ]; then
@@ -345,11 +353,11 @@ pipeline {
       sh '''
         set +e
         echo "Archivos generados:"
-        ls -la pygoat/bandit-report.json pygoat/gitleaks-report.json pygoat/sbom.json pygoat/sbom.xml 2>/dev/null || true
+        ls -la src/bandit-report.json src/gitleaks-report.json src/sbom.json src/sbom.xml 2>/dev/null || true
         echo "Gate summary:"
         cat gate_summary.txt 2>/dev/null || true
       '''
-      archiveArtifacts artifacts: 'pygoat/*.json,pygoat/*.xml,gate_summary.txt,dtrack_project_uuid.txt', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'src/*.json,src/*.xml,gate_summary.txt,dtrack_project_uuid.txt', allowEmptyArchive: true
     }
   }
 }
