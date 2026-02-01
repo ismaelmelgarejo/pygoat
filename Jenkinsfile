@@ -161,8 +161,16 @@ pipeline {
               echo "[*] Proyecto ya existe: $PROJECT_UUID"
             else
               echo "[*] Proyecto no existe; creando..."
+
+               PAYLOAD="$(jq -n \
+                --arg name "$PRODUCT_NAME" \
+                --arg version "$DTRACK_VERSION" \
+                --arg description "Proyecto PyGoat en pipeline CI/CD" \
+                --arg classifier "APPLICATION" \
+                '{name:$name, version:$version, description:$description, classifier:$classifier}')"
+    
               curl -sfL -H "X-Api-Key: $DTRACK_KEY" -H "Content-Type: application/json" \
-                -d "{\"name\":\"$PRODUCT_NAME\",\"version\":\"$DTRACK_VERSION\",\"description\":\"Proyecto PyGoat en pipeline CI/CD\",\"classifier\":\"APPLICATION\"}" \
+                -d "$PAYLOAD" \
                 "$DTRACK_URL/api/v1/project" >/dev/null
 
               PROJECT_UUID="$(curl -sfL -H "X-Api-Key: $DTRACK_KEY" -H "Accept: application/json" \
