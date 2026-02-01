@@ -52,7 +52,7 @@ pipeline {
         sh '''
           set -euo pipefail
           rm -rf pygoat
-          git clone https://github.com/adeyosemanputra/pygoat.git
+          git clone https://github.com/ismaelmelgarejo/pygoat.git
         '''
       }
     }
