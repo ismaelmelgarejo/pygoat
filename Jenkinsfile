@@ -11,10 +11,10 @@ pipeline {
   environment {
     // ====== URLs (TU SETUP) ======
     // Dependency-Track API Server expuesto en tu host:8082
-    DTRACK_URL     = "http://172.17.0.1:8080"
+    DTRACK_URL     = "http://172.17.0.1:8084"
 
     // DefectDojo expuesto en tu host:8086 (según docker ps)
-    DEFECTDOJO_URL = "http://172.17.0.1:8086"
+    DEFECTDOJO_URL = "http://172.17.0.1:8080"
 
     // ====== Nombres para el ejercicio ======
     PRODUCT_NAME     = "PyGoat"
