@@ -161,17 +161,28 @@ pipeline {
               echo "[*] Proyecto ya existe: $PROJECT_UUID"
             else
               echo "[*] Proyecto no existe; creando..."
-
-               PAYLOAD="$(jq -n \
+              PAYLOAD="$(jq -nc \
                 --arg name "$PRODUCT_NAME" \
                 --arg version "$DTRACK_VERSION" \
                 --arg description "Proyecto PyGoat en pipeline CI/CD" \
                 --arg classifier "APPLICATION" \
                 '{name:$name, version:$version, description:$description, classifier:$classifier}')"
-    
-              curl -sfL -H "X-Api-Key: $DTRACK_KEY" -H "Content-Type: application/json" \
+
+              # Importante: -d "$PAYLOAD" (con comillas) para que NO se rompa por espacios/saltos de línea
+              HTTP_CREATE="$(curl -sS -o /tmp/dt_create_resp.json -w "%{http_code}" \
+                -H "X-Api-Key: $DTRACK_KEY" \
+                -H "Content-Type: application/json" \
                 -d "$PAYLOAD" \
-                "$DTRACK_URL/api/v1/project" >/dev/null
+                "$DTRACK_URL/api/v1/project")"
+
+              echo "[*] Create project HTTP: $HTTP_CREATE"
+              cat /tmp/dt_create_resp.json || true
+
+              # Si ya existe puede devolver 409, lo toleramos y seguimos a lookup
+              if [ "$HTTP_CREATE" != "200" ] && [ "$HTTP_CREATE" != "201" ] && [ "$HTTP_CREATE" != "409" ]; then
+                echo "ERROR: No se pudo crear proyecto en Dependency-Track (HTTP $HTTP_CREATE)"
+                exit 1
+              fi
 
               PROJECT_UUID="$(curl -sfL -H "X-Api-Key: $DTRACK_KEY" -H "Accept: application/json" \
                 "$DTRACK_URL/api/v1/project/lookup?name=$PRODUCT_NAME&version=$DTRACK_VERSION" | jq -r '.uuid')"
