@@ -34,7 +34,11 @@ pipeline {
 
     stage('Init Workspace') {
       steps {
-        deleteDir()
+        sh '''
+          set -e
+          # limpieza tolerante
+          rm -rf ./* ./.??* || true
+    '''
       }
     }
 
