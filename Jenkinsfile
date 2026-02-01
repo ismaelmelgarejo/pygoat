@@ -1,29 +1,10 @@
-//pipeline {
-//  agent {
-//   docker {
-//      image 'python:3.11-slim'
-//      args '-u root'
-//    }
-//  }
 pipeline {
-  agent any
-
-  stages {
-    stage('Build') {
-      steps {
-        sh 'echo build ok'
-      }
+  agent {
+   docker {
+      image 'python:3.11-slim'
+      args '-u root'
     }
   }
-
-  post {
-    always {
-      node {
-        sh 'echo post ok'
-      }
-    }
-  }
-}
 
   options { timestamps() }
 
