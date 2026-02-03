@@ -46,14 +46,17 @@ pipeline {
         stage('Secrets - Gitleaks') {
             steps {
                 script {
-                    echo "--- Ejecutando Gitleaks (Como Root) ---"
-                    // AGREGADO: -u root:root
-                    // EXPLICACIÓN: --entrypoint /bin/sh sobreescribe el comando default
+                    echo "--- Ejecutando Gitleaks (Modo Root Forzado) ---"
+                    // NOTA: Aquí escribimos todo el comando docker run explícitamente
+                    // para asegurar que '-u root' está presente y funciona.
                     sh """
-                        docker run ${DOCKER_ARGS} -u root:root --entrypoint /bin/sh zricethezav/gitleaks:v8.18.1 -c " \
-                            git config --global --add safe.directory '*' && \
-                            gitleaks detect -v --source . --log-opts='--all' --report-path gitleaks_report.json --exit-code 0 \
-                        "
+                        docker run --rm -u root:root \
+                        --network devsecops-net \
+                        -v /var/jenkins_home:/var/jenkins_home \
+                        -w ${WORKSPACE} \
+                        --entrypoint /bin/sh \
+                        zricethezav/gitleaks:v8.18.1 \
+                        -c "git config --global --add safe.directory '*' && gitleaks detect -v --source . --log-opts='--all' --report-path gitleaks_report.json --exit-code 0"
                     """
                 }
             }
