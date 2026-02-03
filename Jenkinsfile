@@ -7,7 +7,7 @@ pipeline {
         DD_API_KEY = credentials('DEFECTDOJO_API_KEY')
         DT_API_KEY = credentials('DTRACK_API_KEY')
         DD_ENGAGEMENT_ID = '6'
-        DOCKER_ARGS = '--rm --entrypoint="" --network devsecops-net -v /var/jenkins_home:/var/jenkins_home -w ${WORKSPACE}'
+        DOCKER_ARGS = '--rm --entrypoint="" --network devsecops-net --volumes-from jenkins -w ${WORKSPACE}'
     }
 
     stages {
