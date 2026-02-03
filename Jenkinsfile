@@ -189,7 +189,7 @@ pipeline {
                                 -F 'scan_type=Gitleaks Scan' \
                                 -F 'engagement=${DD_ENGAGEMENT_ID}' \
                                 -F 'file=@gitleaks_report.json' && \
-                            
+                             
                             curl -v -X POST '${DD_URL}/api/v2/import-scan/' \
                                 -H 'Authorization: Token ${DD_API_KEY}' \
                                 -H 'Content-Type: multipart/form-data' \
