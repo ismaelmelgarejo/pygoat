@@ -46,9 +46,7 @@ pipeline {
         stage('Secrets - Gitleaks') {
             steps {
                 script {
-                    echo "--- Ejecutando Gitleaks (Modo Root Forzado) ---"
-                    // NOTA: Aquí escribimos todo el comando docker run explícitamente
-                    // para asegurar que '-u root' está presente y funciona.
+                    echo "--- Ejecutando Gitleaks (ROOT FORZADO) ---"
                     sh """
                         docker run --rm -u root:root \
                         --network devsecops-net \
