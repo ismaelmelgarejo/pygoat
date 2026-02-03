@@ -91,7 +91,8 @@ pipeline {
                     echo "--- Obteniendo UUID ---"
                     curl -s -H "X-Api-Key: \$DT_API_KEY" "\$DT_URL/api/v1/project/lookup?name=Pygoat&version=1.0" > dt_project.json
                     
-                    PROJECT_UUID=\$(grep -o '"uuid":"[^"]*"' dt_project.json | cut -d'"' -f4)
+                    # CORRECCIÓN: Agregamos 'head -n 1' para tomar solo el primer UUID y evitar errores de salto de línea
+                    PROJECT_UUID=\$(grep -o '"uuid":"[^"]*"' dt_project.json | head -n 1 | cut -d'"' -f4)
                     
                     if [ -z "\$PROJECT_UUID" ]; then
                         echo "ERROR: No se pudo obtener UUID."
@@ -107,6 +108,7 @@ pipeline {
                     for i in 1 2 3 4 5; do
                         echo "Intento \$i de descarga..."
                         
+                        # Descargamos el reporte usando el UUID limpio
                         HTTP_CODE=\$(curl -w "%{http_code}" -s -H "X-Api-Key: \$DT_API_KEY" \
                             "\$DT_URL/api/v1/bom/cyclonedx/project/\$PROJECT_UUID" \
                             -o dt_findings.json)
