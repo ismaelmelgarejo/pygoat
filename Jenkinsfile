@@ -66,7 +66,6 @@ pipeline {
         stage('SCA - Dependency Track (Puro & Robusto)') {
             steps {
                 script {
-                    // NOTA: Usamos \ antes de los $ para que Groovy no los toque y pasen directo a Bash
                     def dtScript = """#!/bin/bash
                     set -e
                     echo "--- Instalando herramientas ---"
@@ -77,7 +76,6 @@ pipeline {
                     cyclonedx-py requirements requirements.txt -o bom_inventory.json
                     
                     echo "--- Subiendo Inventario a DT ---"
-                    # Nota: \$DT_URL y \$DT_API_KEY son variables de entorno pasadas por Docker
                     curl -s -X POST "\$DT_URL/api/v1/bom" \
                         -H "Content-Type: multipart/form-data" \
                         -H "X-Api-Key: \$DT_API_KEY" \
@@ -93,7 +91,6 @@ pipeline {
                     echo "--- Obteniendo UUID ---"
                     curl -s -H "X-Api-Key: \$DT_API_KEY" "\$DT_URL/api/v1/project/lookup?name=Pygoat&version=1.0" > dt_project.json
                     
-                    # Usamos grep y cut para extraer el UUID de forma robusta en bash
                     PROJECT_UUID=\$(grep -o '"uuid":"[^"]*"' dt_project.json | cut -d'"' -f4)
                     
                     if [ -z "\$PROJECT_UUID" ]; then
@@ -110,7 +107,6 @@ pipeline {
                     for i in 1 2 3 4 5; do
                         echo "Intento \$i de descarga..."
                         
-                        # CORRECCIÓN DEL ERROR: Agregamos la barra invertida antes de $
                         HTTP_CODE=\$(curl -w "%{http_code}" -s -H "X-Api-Key: \$DT_API_KEY" \
                             "\$DT_URL/api/v1/bom/cyclonedx/project/\$PROJECT_UUID" \
                             -o dt_findings.json)
