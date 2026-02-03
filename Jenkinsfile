@@ -46,15 +46,14 @@ pipeline {
         stage('Secrets - Gitleaks') {
             steps {
                 script {
-                    echo "--- Ejecutando Gitleaks (ROOT FORZADO) ---"
+                    echo "--- Ejecutando Gitleaks (Corregido) ---"
+                    // NOTA: Ahora usamos ${DOCKER_ARGS} que incluye '--volumes-from jenkins'.
+                    // Ya NO ponemos '-v ...' manualmente.
                     sh """
-                        docker run --rm -u root:root \
-                        --network devsecops-net \
-                        -v /var/jenkins_home:/var/jenkins_home \
-                        -w ${WORKSPACE} \
-                        --entrypoint /bin/sh \
-                        zricethezav/gitleaks:v8.18.1 \
-                        -c "git config --global --add safe.directory '*' && gitleaks detect -v --source . --log-opts='--all' --report-path gitleaks_report.json --exit-code 0"
+                        docker run ${DOCKER_ARGS} -u root:root --entrypoint /bin/sh zricethezav/gitleaks:v8.18.1 -c " \
+                            git config --global --add safe.directory '*' && \
+                            gitleaks detect -v --source . --log-opts='--all' --report-path gitleaks_report.json --exit-code 0 \
+                        "
                     """
                 }
             }
