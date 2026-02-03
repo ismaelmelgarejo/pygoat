@@ -197,7 +197,7 @@ pipeline {
                                 -F 'verified=true' \
                                 -F 'minimum_severity=High' \
                                 -F 'close_old_findings=true' \
-                                -F 'scan_type=Dependency Track Finding Packaging Format (FPF) Export' \
+                                -F 'scan_type=Dependency Track' \
                                 -F 'engagement=${DD_ENGAGEMENT_ID}' \
                                 -F 'file=@dt_findings.json'
                         "
