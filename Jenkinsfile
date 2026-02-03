@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DT_URL = 'http://dependecy-track-dtrack-apiserver-1:8084' 
+        DT_URL = 'http://dependecy-track-dtrack-apiserver-1:8083' 
         DD_URL = 'http://django-defectdojo-nginx-1:8080'
         DD_API_KEY = credentials('DEFECTDOJO_API_KEY')
         DT_API_KEY = credentials('DTRACK_API_KEY')
