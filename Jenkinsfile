@@ -112,7 +112,7 @@ pipeline {
                         
                         # Capturamos codigo HTTP y contenido
                         HTTP_CODE=\$(curl -w "%{http_code}" -s -H "X-Api-Key: \$DT_API_KEY" \
-                            "\$DT_URL/api/v1/finding/project/\$PROJECT_UUID?suppressed=false" \
+                            "\$DT_URL/api/v1/bom/cyclonedx/project/\$PROJECT_UUID" \
                             -o dt_findings.json)
                         
                         echo "Codigo HTTP: \$HTTP_CODE"
@@ -197,7 +197,7 @@ pipeline {
                                 -F 'verified=true' \
                                 -F 'minimum_severity=High' \
                                 -F 'close_old_findings=true' \
-                                -F 'scan_type=Dependency Track' \
+                                -F 'scan_type=CycloneDX Scan' \
                                 -F 'engagement=${DD_ENGAGEMENT_ID}' \
                                 -F 'file=@dt_findings.json'
                         "
