@@ -46,8 +46,9 @@ pipeline {
         stage('Secrets - Gitleaks') {
             steps {
                 script {
-                    echo "--- Ejecutando Gitleaks ---"
-                    // CAMBIO CLAVE: Agregamos '-u root:root' antes de la imagen
+                    echo "--- Ejecutando Gitleaks (Como Root) ---"
+                    // AGREGADO: -u root:root
+                    // EXPLICACIÓN: --entrypoint /bin/sh sobreescribe el comando default
                     sh """
                         docker run ${DOCKER_ARGS} -u root:root --entrypoint /bin/sh zricethezav/gitleaks:v8.18.1 -c " \
                             git config --global --add safe.directory '*' && \
