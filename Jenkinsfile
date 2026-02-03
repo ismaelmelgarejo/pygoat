@@ -192,8 +192,8 @@ pipeline {
                                 -F 'engagement=${DD_ENGAGEMENT_ID}' \
                                 -F 'file=@gitleaks_report.json' && \
                             
-                            # 3. DT FINDINGS (FPF Export)
-                            # Usamos el archivo puro descargado de la API
+#                           3. DT FINDINGS
+                            # CORRECCIÓN: Usamos "Dependency Track" (El parser correcto para JSON de API)
                             curl -v -X POST '${DD_URL}/api/v2/import-scan/' \
                                 -H 'Authorization: Token ${DD_API_KEY}' \
                                 -H 'Content-Type: multipart/form-data' \
@@ -201,9 +201,9 @@ pipeline {
                                 -F 'verified=true' \
                                 -F 'minimum_severity=High' \
                                 -F 'close_old_findings=true' \
-                                -F 'scan_type=Dependency Track Finding Packaging Format (FPF) Export' \
+                                -F 'scan_type=Dependency Track' \
                                 -F 'engagement=${DD_ENGAGEMENT_ID}' \
-                                -F 'file=@dt_findings.json' \
+                                -F 'file=@dt_findings.json'
                         "
                     """
                 }
