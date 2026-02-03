@@ -47,11 +47,9 @@ pipeline {
             steps {
                 script {
                     echo "--- Ejecutando Gitleaks ---"
-                    // CAMBIOS: 
-                    // 1. Usamos --entrypoint /bin/sh para anular el ejecutable por defecto
-                    // 2. Quitamos la referencia a bash explícita
+                    // CAMBIO CLAVE: Agregamos '-u root:root' antes de la imagen
                     sh """
-                        docker run ${DOCKER_ARGS} --entrypoint /bin/sh zricethezav/gitleaks:v8.18.1 -c " \
+                        docker run ${DOCKER_ARGS} -u root:root --entrypoint /bin/sh zricethezav/gitleaks:v8.18.1 -c " \
                             git config --global --add safe.directory '*' && \
                             gitleaks detect -v --source . --log-opts='--all' --report-path gitleaks_report.json --exit-code 0 \
                         "
