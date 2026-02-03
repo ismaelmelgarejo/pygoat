@@ -2,11 +2,15 @@ pipeline {
     agent any
 
     environment {
-        DT_URL = 'http://dependecy-track-dtrack-apiserver-1:8083' 
+        // CORRECCIÓN: Puerto 8080 (El puerto interno real del contenedor)
+        DT_URL = 'http://dependecy-track-dtrack-apiserver-1:8080' 
+        
+        // El resto se mantiene igual
         DD_URL = 'http://django-defectdojo-nginx-1:8080'
         DD_API_KEY = credentials('DEFECTDOJO_API_KEY')
         DT_API_KEY = credentials('DTRACK_API_KEY')
-        DD_ENGAGEMENT_ID = '6'
+        DD_ENGAGEMENT_ID = '1'
+        // Mantén el arreglo de volúmenes que hicimos funcionar antes
         DOCKER_ARGS = '--rm --entrypoint="" --network devsecops-net --volumes-from jenkins -w ${WORKSPACE}'
     }
 
