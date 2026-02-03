@@ -31,9 +31,11 @@ pipeline {
             steps {
                 script {
                     echo "--- Ejecutando Bandit ---"
+                    // AGREGAMOS: -e PYTHONUNBUFFERED=1
+                    // AGREGAMOS: --no-cache-dir al pip install
                     sh """
-                        docker run ${DOCKER_ARGS} python:3.10-slim /bin/bash -c " \
-                            pip install bandit && \
+                        docker run ${DOCKER_ARGS} -e PYTHONUNBUFFERED=1 python:3.10-slim /bin/bash -c " \
+                            pip install --no-cache-dir bandit && \
                             bandit -r . -f json -o bandit_report.json || true \
                         "
                     """
