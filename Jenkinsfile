@@ -165,10 +165,9 @@ pipeline {
                 script {
                     echo "--- Subiendo Reportes ---"
                     sh "ls -lh bandit_report.json gitleaks_report.json dt_findings.json"
-                    
+                     
                     sh """
                         docker run ${DOCKER_ARGS} curlimages/curl:latest /bin/sh -c " \
-                            # 1. BANDIT
                             curl -v -X POST '${DD_URL}/api/v2/import-scan/' \
                                 -H 'Authorization: Token ${DD_API_KEY}' \
                                 -H 'Content-Type: multipart/form-data' \
@@ -180,7 +179,6 @@ pipeline {
                                 -F 'engagement=${DD_ENGAGEMENT_ID}' \
                                 -F 'file=@bandit_report.json' && \
                             
-                            # 2. GITLEAKS
                             curl -v -X POST '${DD_URL}/api/v2/import-scan/' \
                                 -H 'Authorization: Token ${DD_API_KEY}' \
                                 -H 'Content-Type: multipart/form-data' \
@@ -192,8 +190,6 @@ pipeline {
                                 -F 'engagement=${DD_ENGAGEMENT_ID}' \
                                 -F 'file=@gitleaks_report.json' && \
                             
-#                           3. DT FINDINGS
-                            # CORRECCIÓN: Usamos "Dependency Track" (El parser correcto para JSON de API)
                             curl -v -X POST '${DD_URL}/api/v2/import-scan/' \
                                 -H 'Authorization: Token ${DD_API_KEY}' \
                                 -H 'Content-Type: multipart/form-data' \
