@@ -66,16 +66,18 @@ pipeline {
         stage('SCA - Dependency Track (Puro & Robusto)') {
             steps {
                 script {
+                    // NOTA: Usamos \ antes de los $ para que Groovy no los toque y pasen directo a Bash
                     def dtScript = """#!/bin/bash
                     set -e
                     echo "--- Instalando herramientas ---"
                     apt-get update -qq && apt-get install -y curl -qq
-                    pip install cyclonedx-bom -q
+                    pip install --no-cache-dir cyclonedx-bom -q
                     
                     echo "--- Generando BOM (Inventario) ---"
                     cyclonedx-py requirements requirements.txt -o bom_inventory.json
                     
                     echo "--- Subiendo Inventario a DT ---"
+                    # Nota: \$DT_URL y \$DT_API_KEY son variables de entorno pasadas por Docker
                     curl -s -X POST "\$DT_URL/api/v1/bom" \
                         -H "Content-Type: multipart/form-data" \
                         -H "X-Api-Key: \$DT_API_KEY" \
@@ -85,72 +87,60 @@ pipeline {
                         -F "bom=@bom_inventory.json"
                     
                     echo ""
-                    echo "--- Esperando 60s a que DT analice... ---"
-                    sleep 60
+                    echo "--- Esperando 30s a que DT analice... ---"
+                    sleep 30
                     
                     echo "--- Obteniendo UUID ---"
                     curl -s -H "X-Api-Key: \$DT_API_KEY" "\$DT_URL/api/v1/project/lookup?name=Pygoat&version=1.0" > dt_project.json
                     
-                    # Debug: Ver contenido del proyecto
-                    cat dt_project.json
-                    
-                    PROJECT_UUID=\$(cat dt_project.json | python3 -c "import sys, json; print(json.load(sys.stdin).get('uuid', ''))" 2>/dev/null)
+                    # Usamos grep y cut para extraer el UUID de forma robusta en bash
+                    PROJECT_UUID=\$(grep -o '"uuid":"[^"]*"' dt_project.json | cut -d'"' -f4)
                     
                     if [ -z "\$PROJECT_UUID" ]; then
                         echo "ERROR: No se pudo obtener UUID."
+                        cat dt_project.json
                         exit 1
                     fi
                     
                     echo "UUID Objetivo: \$PROJECT_UUID"
                     
-                    echo "--- Descargando Findings (Con Reintentos) ---"
+                    echo "--- Descargando CycloneDX (Con Reintentos) ---"
                     SUCCESS=0
                     
-                    # Intentamos descargar hasta 5 veces
                     for i in 1 2 3 4 5; do
                         echo "Intento \$i de descarga..."
                         
-                        # Capturamos codigo HTTP y contenido
-                        HTTP_CODE=$(curl -w "%{http_code}" -s -H "X-Api-Key: $DT_API_KEY" \
-                            "$DT_URL/api/v1/bom/cyclonedx/project/$PROJECT_UUID" \
+                        # CORRECCIÓN DEL ERROR: Agregamos la barra invertida antes de $
+                        HTTP_CODE=\$(curl -w "%{http_code}" -s -H "X-Api-Key: \$DT_API_KEY" \
+                            "\$DT_URL/api/v1/bom/cyclonedx/project/\$PROJECT_UUID" \
                             -o dt_findings.json)
                         
                         echo "Codigo HTTP: \$HTTP_CODE"
                         
-                        # Verificamos si es 200 OK
                         if [ "\$HTTP_CODE" == "200" ]; then
                             SIZE=\$(wc -c < dt_findings.json)
-                            echo "Tamaño archivo: \$SIZE bytes"
-                            
-                            # Si tiene contenido, salimos
-                            if [ "\$SIZE" -gt 2 ]; then
+                            if [ "\$SIZE" -gt 10 ]; then
                                 echo "¡Descarga Exitosa!"
                                 SUCCESS=1
                                 break
-                            else
-                                echo "Archivo vacio o [] (Sin hallazgos aun). Reintentando..."
                             fi
-                        else
-                            echo "Error en la API. Respuesta del servidor:"
-                            cat dt_findings.json
                         fi
-                        
+                        echo "Aun no listo. Reintentando..."
                         sleep 10
                     done
                     
                     if [ \$SUCCESS -eq 0 ]; then
-                        echo "ADVERTENCIA: No se pudieron descargar findings validos."
-                        # Creamos un array vacio valido para que DefectDojo no falle con 400 Bad Request
-                        echo '[]' > dt_findings.json
+                        echo "ADVERTENCIA: No se pudo descargar el reporte. Creando dummy."
+                        echo '{"bomFormat": "CycloneDX"}' > dt_findings.json
                     fi
                     
                     ls -lh dt_findings.json
                     """
                     
                     writeFile file: 'run_dt_pure.sh', text: dtScript
-                    sh "chmod +x run_dt_pure.sh"
                     
                     sh """
+                        chmod +x run_dt_pure.sh && \
                         docker run ${DOCKER_ARGS} \
                             -e DT_URL='${DT_URL}' \
                             -e DT_API_KEY='${DT_API_KEY}' \
