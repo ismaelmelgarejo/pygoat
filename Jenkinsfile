@@ -111,8 +111,8 @@ pipeline {
                         echo "Intento \$i de descarga..."
                         
                         # Capturamos codigo HTTP y contenido
-                        HTTP_CODE=\$(curl -w "%{http_code}" -s -H "X-Api-Key: \$DT_API_KEY" \
-                            "\$DT_URL/api/v1/bom/cyclonedx/project/\$PROJECT_UUID" \
+                        HTTP_CODE=$(curl -w "%{http_code}" -s -H "X-Api-Key: $DT_API_KEY" \
+                            "$DT_URL/api/v1/bom/cyclonedx/project/$PROJECT_UUID" \
                             -o dt_findings.json)
                         
                         echo "Codigo HTTP: \$HTTP_CODE"
